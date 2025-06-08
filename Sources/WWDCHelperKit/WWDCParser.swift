@@ -8,13 +8,13 @@
 import Foundation
 
 public class WWDCParser: RegexSessionInfoParsable {
-    static let shared = WWDCParser()
+    public static let shared = WWDCParser()
     
     private init() {}
     
-    let patterns: [SessionInfoType : String] = [
+    public let patterns: [SessionInfoType : String] = [
         .subtitleIndexURLPrefix: "(http.*)\\/.*_hd",
-        .resources: "<ul\\sclass=\"links\\ssmall\">[\\s\\S]*<a\\shref=\"(https.*(mp4|mov))(?:\\?dl=1)?\">[\\s\\S]*<a\\shref=\"(https.*(mp4|mov))(?:\\?dl=1)?\">[\\s\\S]*<a\\shref=\"((https|http).*pdf)(?:\\?dl=1)?\">",
-        .sessionsInfo: "<a href=\"\\/videos\\/play\\/[\\S]{8}\\/([0-9]*)\\/\".*\\n.*<h4.*>(.*)</h4>"
+        .resources: #"<li class="download">[\s\S]*?<a href="(https://devstreaming-cdn\.apple\.com/videos/wwdc/2024/[0-9]+/.*?\.mp4\?dl=1)">"#,
+        .sessionsInfo: "<a href=\"\\/videos\\/play\\/[\\w-]+\\/([0-9]+)\\/\"[^>]*?>.*?<h5 class=\"vc-card__title\">(.*?)<\\/h5>"
     ]
 }

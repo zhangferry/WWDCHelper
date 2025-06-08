@@ -72,7 +72,7 @@ if versionOption.value {
 
 let year = yearOption.value
 let sessionIDs = sessionIDsOption.value
-let subtitleLanguage: String? = subtitleLanguageOption.value?.lowercased()
+let subtitleLanguage: String? = subtitleLanguageOption.value?.lowercased() ?? SubtitleLanguage.eng.rawValue
 let subtitlePath = subtitlePathOption.value
 let isSubtitleForSDVideo = isSubtitleForSDVideoOption.value
 
@@ -85,7 +85,15 @@ var helper = WWDCHelper(year: year,
 do {
     print("Welcome to WWDCHelper by github.com/kingcos! 👏")
     print("Please wait a little while.\nHelper is trying to fetch your favorite WWDC info hard...")
+    
+#if DEBUG
+
+    let session = WWDCSession("10068", "Bring your Live Activity to Apple Watch", ["https://devstreaming-cdn.apple.com/videos/wwdc/2024/10068/4/C621DA91-3F64-481C-8D10-25A5C5FCD587/downloads/wwdc2024-10068_hd.mp4?dl=1"])
+    try helper.downloadData([session], with: WWDCParser.shared)
+    
+#else
     try helper.enterHelper()
+#endif
 } catch {
     print("If you have any issues, please contact with me at github.com/kingcos.")
     guard let err = error as? HelperError else {

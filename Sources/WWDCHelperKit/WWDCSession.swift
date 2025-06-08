@@ -21,7 +21,7 @@ public struct WWDCSession: Equatable {
     public let subtitleIndexURL: String?
     public var resources: [WWDCSessionResourceType : String]
     
-    init(_ id: String,
+    public init(_ id: String,
          _ title: String,
          _ resources: [String],
          _ subtitleIndexURL: String? = nil) {

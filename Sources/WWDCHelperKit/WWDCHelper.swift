@@ -12,6 +12,7 @@ import Rainbow
 import WWDCWebVTTToSRTHelperKit
 
 public enum WWDCYear: String {
+    case wwdc2024 = "wwdc2024"
     case wwdc2019 = "wwdc2019"
     case wwdc2018 = "wwdc2018"
     case wwdc2017 = "wwdc2017"
@@ -24,11 +25,13 @@ public enum WWDCYear: String {
     
     init(_ value: String?) {
         guard let value = value else {
-            self = .wwdc2019
+            self = .wwdc2024
             return
         }
         
         switch value.lowercased() {
+        case "wwdc2024", "2024":
+            self = .wwdc2024
         case "wwdc2019", "2019":
             self = .wwdc2019
         case "wwdc2018", "2018":
@@ -127,7 +130,7 @@ extension WWDCHelper {
         }
     }
     
-    func downloadData(_ sessions: [WWDCSession], with parser: RegexSessionInfoParsable) throws {
+    public func downloadData(_ sessions: [WWDCSession], with parser: RegexSessionInfoParsable) throws {
         print("Start downloading...")
         
         for session in sessions {
@@ -181,7 +184,7 @@ extension WWDCHelper {
 }
 
 extension WWDCHelper {
-    mutating func getSessions(by ids: [String]? = nil, with parser: RegexSessionInfoParsable) throws -> [WWDCSession] {
+    public mutating func getSessions(by ids: [String]? = nil, with parser: RegexSessionInfoParsable) throws -> [WWDCSession] {
         if sessionsInfo.isEmpty {
             sessionsInfo = getSessionsInfo(with: parser)
         }
@@ -225,7 +228,12 @@ extension WWDCHelper {
         if resources.isEmpty {
             return nil
         }
-        return parser.parseSubtitleIndexURLPrefix(in: resources[0])
+        var url = parser.parseSubtitleIndexURLPrefix(in: resources[0])
+        /// 移除多余的downloads路径
+        if url.hasSuffix("downloads") {
+            url = url.replacingOccurrences(of: "/downloads", with: "")
+        }
+        return url
     }
     
     func getSubtitleIndexURL(with resources: [String], and parser: RegexSessionInfoParsable) -> String? {
@@ -237,18 +245,11 @@ extension WWDCHelper {
         guard let urlPrefix = getSubtitleIndexURLPrefix(with: resources, and: parser),
             let url = getSubtitleIndexURL(with: resources, and: parser) else { return nil }
         let content = Network.shared.fetchContent(of: url)
-        var filesCount = content
+        return content
             .components(separatedBy: "\n")
-            .filter { $0.hasPrefix("fileSequence") }
-            .count
-        
-        if filesCount == 0 {
-            filesCount = 100
-        }
-        var result = [String]()
-        for i in 0 ..< filesCount {
-            result.append(urlPrefix + "/subtitles/\(subtitleLanguage.rawValue)/fileSequence\(i).webvtt")
-        }
-        return result
+            .filter { $0.hasSuffix(".webvtt") }
+            .map {
+                urlPrefix + "/subtitles/\(subtitleLanguage.rawValue)/\($0)"
+            }
     }
 }
