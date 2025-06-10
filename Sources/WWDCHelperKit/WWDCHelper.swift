@@ -11,46 +11,23 @@ import PathKit
 import Rainbow
 import WWDCWebVTTToSRTHelperKit
 
-public enum WWDCYear: String {
-    case wwdc2024 = "wwdc2024"
-    case wwdc2019 = "wwdc2019"
-    case wwdc2018 = "wwdc2018"
-    case wwdc2017 = "wwdc2017"
-    case wwdc2016 = "wwdc2016"
-    case wwdc2015 = "wwdc2015"
-    case wwdc2014 = "wwdc2014"
-    case wwdc2013 = "wwdc2013"
-    case wwdc2012 = "wwdc2012"
-    case unknown
+public struct WWDCYear {
+    let rawValue: Int
     
     init(_ value: String?) {
-        guard let value = value else {
-            self = .wwdc2024
-            return
+        if let value, let yearValue = Int(value) {
+            self.rawValue = yearValue
+        } else {
+            self.rawValue = 2024
         }
-        
-        switch value.lowercased() {
-        case "wwdc2024", "2024":
-            self = .wwdc2024
-        case "wwdc2019", "2019":
-            self = .wwdc2019
-        case "wwdc2018", "2018":
-            self = .wwdc2018
-        case "wwdc2017", "2017":
-            self = .wwdc2017
-        case "wwdc2016", "2016":
-            self = .wwdc2016
-        case "wwdc2015", "2015":
-            self = .wwdc2015
-        case "wwdc2014", "2014":
-            self = .wwdc2014
-        case "wwdc2013", "2013":
-            self = .wwdc2013
-        case "wwdc2012", "2012":
-            self = .wwdc2012
-        default:
-            self = .unknown
-        }
+    }
+    
+    var string: String {
+        return "wwdc\(self.rawValue)"
+    }
+    
+    var isValid: Bool {
+        return self.rawValue > 2021
     }
 }
 
@@ -58,26 +35,9 @@ public enum SubtitleLanguage: String {
     case eng = "eng"
     case chs = "zho"
     case jpn = "jpn"
+    
     case empty
     case unknown
-    
-    init(_ value: String?) {
-        guard let value = value else {
-            self = .empty
-            return
-        }
-        
-        switch value {
-        case "eng":
-            self = .eng
-        case "chs":
-            self = .chs
-        case "jpn":
-            self = .jpn
-        default:
-            self = .unknown
-        }
-    }
 }
 
 public enum HelperError: Error {
@@ -105,7 +65,16 @@ public struct WWDCHelper {
                 isSubtitleForSDVideo: Bool = false) {
         self.year = WWDCYear(year)
         self.sessionIDs = sessionIDs
-        self.subtitleLanguage = SubtitleLanguage(subtitleLanguage)
+        if let subtitleLanguage {
+            if let lang = SubtitleLanguage(rawValue: subtitleLanguage) {
+                self.subtitleLanguage = lang
+            } else {
+                self.subtitleLanguage = .unknown
+            }
+        } else {
+            self.subtitleLanguage = .empty
+        }
+        
         self.subtitlePath = Path(subtitlePath ?? ".").absolute()
         self.isSubtitleForSDVideo = isSubtitleForSDVideo
     }
@@ -113,7 +82,7 @@ public struct WWDCHelper {
 
 extension WWDCHelper {
     public mutating func enterHelper() throws {
-        guard year != .unknown else { throw HelperError.unknownYear }
+        guard year.isValid else { throw HelperError.unknownYear }
         guard subtitleLanguage != .unknown else { throw HelperError.unknownSubtitleLanguage }
         
         let sessions = try getSessions(by: sessionIDs,
@@ -213,13 +182,13 @@ extension WWDCHelper {
 
 extension WWDCHelper {
     func getSessionsInfo(with parser: RegexSessionInfoParsable) -> [String : String] {
-        let url = "https://developer.apple.com/videos/\(year.rawValue)/"
+        let url = "https://developer.apple.com/videos/\(year.string)/"
         let content = Network.shared.fetchContent(of: url)
         return parser.parseSessionsInfo(in: content)
     }
     
     func getResourceURLs(by id: String, with parser: RegexSessionInfoParsable) -> [String] {
-        let url = "https://developer.apple.com/videos/play/\(year.rawValue)/\(id)/"
+        let url = "https://developer.apple.com/videos/play/\(year.string)/\(id)/"
         let content = Network.shared.fetchContent(of: url)
         return parser.parseResourceURLs(in: content)
     }

@@ -41,7 +41,7 @@ public struct WWDCSession: Equatable {
     }
     
     func output(_ year: WWDCYear) {
-        print(year.rawValue.uppercased().bold, "- Session \(id) - \(title)".bold)
+        print(year.string.uppercased().bold, "- Session \(id) - \(title)".bold)
         if let hdVideo = resources[.hdVideo], hdVideo != "" {
             print("\(WWDCSessionResourceType.hdVideo.rawValue) Download:", "\n\(hdVideo)".underline)
         }
